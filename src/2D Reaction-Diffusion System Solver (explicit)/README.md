@@ -30,6 +30,7 @@ The reaction terms $f$ and $g$ follow the Gray-Scott model:
 ### 2.1 Spatial Discretization
 We utilize the **Second-Order Central Difference** scheme on a uniform grid to approximate the Laplacian:
 $$\Delta u_{i,j} \approx \frac{u_{i+1,j} + u_{i-1,j} + u_{i,j+1} + u_{i,j-1} - 4u_{i,j}}{\Delta x^2}$$
+
 To satisfy the requirement for **periodic boundary conditions**, the implementation uses `numpy.roll` for efficient circular indexing.
 
 ### 2.2 Temporal Integration
@@ -50,8 +51,6 @@ In alignment with the **PROJECT_4.pdf** assignments:
 * **Verification (Section 3.2)**: Integrated unit tests verify the accuracy of the Laplacian operator and the temporal update step.
 
 ---
-
-
 
 ## 4. Implementation Details
 
@@ -74,11 +73,11 @@ $$u^{k+1} = u^k + \Delta t \cdot \left( \delta_1 \Delta u^k + f(u^k, v^k) \right
 
 In accordance with Section 3.2 of the project assignments, the code includes a test suite to ensure numerical integrity:
 
-### 5.1 Laplacian Accuracy Test (`test_laplacian_2d`)
+### 5.1 Laplacian Accuracy Test (**test_laplacian_2d**)
 * **Logic**: Creates a $3 \times 3$ grid with a single impulse (value of $1.0$) at the center.
 * **Verification**: Checks if the discrete Laplacian returns $-4.0$ at the center and $+1.0$ at the adjacent neighbors, confirming the $\frac{1}{\Delta x^2}$ scaling and correct neighbor indexing.
 
-### 5.2 Temporal Update Test (`test_explicit_euler_step`)
+### 5.2 Temporal Update Test (**test_explicit_euler_step**)
 * **Logic**: Simulates a single time step on a uniform field where the Laplacian is zero. 
 * **Verification**: By isolating the reaction terms, it confirms that the solver correctly calculates $u + \Delta t \cdot f(u,v)$, ensuring the Euler integration logic is mathematically sound.
 
