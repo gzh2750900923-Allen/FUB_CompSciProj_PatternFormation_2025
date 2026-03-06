@@ -84,7 +84,3 @@ $$\mathbf{u}^{k+1} = \left[ \frac{\Delta t \delta_1}{\Delta x^2} (A + B - 4E) + 
 * $B$: Interaction matrix for the $y$-direction ($j \pm 1$).
 * $E$: Identity matrix.
 * $\mathbf{F}^k$: Vectorized reaction terms $f(u^k, v^k)$.
-
----
-
-Would you like me to generate a **Python script** using `scipy.sparse` that implements this specific matrix-vector form?
