@@ -168,7 +168,7 @@ if __name__ == "__main__":
         Du = params['u']
         Dv = params['v']
         
-        leopard_model = GreyScottModel()  # 使用 Grey-Scott 模型作为示例
+        leopard_model = GreyScottModel()  
         
         print("Starting Explicit Euler simulation...")
         solver_ex = ReactionDiffusionSolver(
