@@ -21,23 +21,23 @@
 - **Python 3.9+** (Tested on 3.13)
 - **Virtual Environment** (Highly Recommended)
   - 1. Create and activate virtual environment
-    python3 -m venv venv
-    source venv/bin/activate  # Mac/Linux
-    venv\Scripts\activate     # For Windows: 
+    - python3 -m venv venv
+    - source venv/bin/activate  # Mac/Linux
+    - venv\Scripts\activate     # For Windows
   - 2. Install dependencies
-    pip3 install -r requirements.txt
+    - pip3 install -r requirements.txt
   - 3. Install the package locally
-    pip3 install -e .  
+    - pip3 install -e .  
   - 4. Environment Configuration
-    export PYTHONPATH=$PYTHONPATH:.
+    - export PYTHONPATH=$PYTHONPATH:.
 
 ## 6. How to Run
   - 1. Numerical Validation(Task 3.2)
-    python3 scripts/main_order_validation.py
+    - python3 scripts/main_order_validation.py
   - 2. Pattern Generation(Task 3.3)
-    python3 scripts/main_task_3_3_final.py
+    - python3 scripts/main_task_3_3_final.py
   - 3. Dask Parallel Benchmark(Task 3.4)
-    python3 scripts/main_dask_benchmark.py
-    Dask Dashboard: Open http://127.0.0.1:8787 in your browser to monitor real-time CPU core utilization.
+    - python3 scripts/main_dask_benchmark.py
+    - Dask Dashboard: Open http://127.0.0.1:8787 in your browser to monitor real-time CPU core utilization.
   - 4. Running Unit Tests
-    python3 -m unittest discover -v -s tests -p "test_*.py"
+    - python3 -m unittest discover -v -s tests -p "test_*.py"
