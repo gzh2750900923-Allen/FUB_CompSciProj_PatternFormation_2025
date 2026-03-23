@@ -1,0 +1,13 @@
+# Core scientific computing
+numpy>=1.24
+scipy>=1.10
+matplotlib>=3.7
+
+# Parallelization (optional tasks)
+dask>=2023.1
+
+# Development & testing
+pytest>=7.0
+pytest-cov>=4.0
+black>=23.0
+flake8>=6.0

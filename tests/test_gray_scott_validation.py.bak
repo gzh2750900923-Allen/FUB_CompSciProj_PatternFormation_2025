@@ -1,0 +1,194 @@
+"""
+Gray-Scott validation: convergence order & benchmark.
+
+1. Order verification  — compare both solvers against a reference solution
+2. Performance benchmark — wall-clock time for N=64 and N=128
+3. Visual output saved to outputs/
+"""
+
+import sys, time, os
+sys.path.insert(0, "/home/claude/pattern_formation")
+
+import numpy as np
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+from pattern_formation.core.grid import CartesianGrid
+from pattern_formation.models.gray_scott import GrayScottModel
+from pattern_formation.solvers.explicit import ExplicitSolver
+from pattern_formation.solvers.crank_nicolson import CrankNicolsonSolver
+
+os.makedirs("/mnt/user-data/outputs", exist_ok=True)
+
+# ── Shared parameters ─────────────────────────────────────────────────────────
+ALPHA, BETA   = 0.035, 0.065
+DELTA1, DELTA2 = 2e-5, 1e-5
+N_SIM         = 128     # grid size for pattern run
+N_STEPS_SIM   = 8000    # steps to generate a visible pattern
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. Pattern simulation & visualisation
+# ─────────────────────────────────────────────────────────────────────────────
+def run_and_plot():
+    print("\n=== Gray-Scott Pattern Simulation ===")
+    model = GrayScottModel(alpha=ALPHA, beta=BETA)
+    grid  = CartesianGrid(N=N_SIM)
+    u0, v0 = model.initial_conditions(grid, seed=0)
+
+    # --- Explicit run ---
+    dt_exp = grid.dx**2 / (4 * max(DELTA1, DELTA2)) * 0.9   # 90% of limit
+    exp    = ExplicitSolver(model, grid, DELTA1, DELTA2, dt_exp)
+    t0     = time.perf_counter()
+    u_e, v_e = exp.run(u0.copy(), v0.copy(), N_STEPS_SIM)
+    t_exp  = time.perf_counter() - t0
+    print(f"  Explicit  : {N_STEPS_SIM} steps in {t_exp:.2f}s  "
+          f"(dt={dt_exp:.2e})")
+
+    # --- Crank-Nicolson run (can use larger dt) ---
+    dt_cn = dt_exp * 5.0    # 5× larger dt
+    cn    = CrankNicolsonSolver(model, grid, DELTA1, DELTA2, dt_cn)
+    t0    = time.perf_counter()
+    u_c, v_c = cn.run(u0.copy(), v0.copy(), N_STEPS_SIM)
+    t_cn  = time.perf_counter() - t0
+    print(f"  Crank-Nicolson: {N_STEPS_SIM} steps in {t_cn:.2f}s  "
+          f"(dt={dt_cn:.2e}, speedup×dt = {dt_cn/dt_exp:.1f})")
+
+    # --- Plot ---
+    fig, axes = plt.subplots(2, 2, figsize=(11, 9))
+    fig.suptitle(
+        f"Gray-Scott Model  (α={ALPHA}, β={BETA}, N={N_SIM})\n"
+        f"Explicit dt={dt_exp:.2e}, {N_STEPS_SIM} steps, t={t_exp:.1f}s   |   "
+        f"CN dt={dt_cn:.2e}, {N_STEPS_SIM} steps, t={t_cn:.1f}s",
+        fontsize=11)
+
+    kw = dict(origin="lower", aspect="equal", interpolation="nearest")
+    axes[0,0].imshow(u_e.T, cmap="RdBu_r", **kw); axes[0,0].set_title("Explicit — u"); axes[0,0].axis("off")
+    axes[0,1].imshow(v_e.T, cmap="plasma",  **kw); axes[0,1].set_title("Explicit — v"); axes[0,1].axis("off")
+    axes[1,0].imshow(u_c.T, cmap="RdBu_r", **kw); axes[1,0].set_title("Crank-Nicolson — u"); axes[1,0].axis("off")
+    axes[1,1].imshow(v_c.T, cmap="plasma",  **kw); axes[1,1].set_title("Crank-Nicolson — v"); axes[1,1].axis("off")
+
+    plt.tight_layout()
+    out = "/mnt/user-data/outputs/gray_scott_patterns.png"
+    plt.savefig(out, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  Pattern figure saved → {out}")
+    return t_exp, t_cn, dt_exp, dt_cn
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. Convergence (time-step) order test
+# ─────────────────────────────────────────────────────────────────────────────
+def convergence_test():
+    """
+    Run both solvers with decreasing dt and measure error vs. reference.
+    Expected:  Explicit O(dt),  Crank-Nicolson O(dt²) in diffusion.
+    """
+    print("\n=== Convergence Order Test ===")
+    model  = GrayScottModel(alpha=ALPHA, beta=BETA)
+    grid   = CartesianGrid(N=32)
+    u0, v0 = model.initial_conditions(grid, seed=1)
+    T_END  = 20.0   # short physical time so reference is cheap
+
+    # Reference: tiny dt explicit
+    dt_ref = grid.dx**2 / (4 * max(DELTA1, DELTA2)) * 0.1
+    n_ref  = int(T_END / dt_ref)
+    ref_solver = ExplicitSolver(model, grid, DELTA1, DELTA2, dt_ref)
+    u_ref, v_ref = ref_solver.run(u0.copy(), v0.copy(), n_ref)
+
+    dt_base = grid.dx**2 / (4 * max(DELTA1, DELTA2)) * 0.5
+    dts  = [dt_base / k for k in (1, 2, 4, 8)]
+    errs_exp, errs_cn = [], []
+
+    for dt in dts:
+        n_steps = int(T_END / dt)
+        # Explicit
+        s = ExplicitSolver(model, grid, DELTA1, DELTA2, dt)
+        u_e, _ = s.run(u0.copy(), v0.copy(), n_steps)
+        errs_exp.append(np.max(np.abs(u_e - u_ref)))
+        # CN
+        s = CrankNicolsonSolver(model, grid, DELTA1, DELTA2, dt)
+        u_c, _ = s.run(u0.copy(), v0.copy(), n_steps)
+        errs_cn.append(np.max(np.abs(u_c - u_ref)))
+
+    # Compute observed orders
+    orders_exp = [np.log2(errs_exp[i]/errs_exp[i+1]) for i in range(len(dts)-1)]
+    orders_cn  = [np.log2(errs_cn[i] /errs_cn[i+1])  for i in range(len(dts)-1)]
+
+    print(f"  {'dt':>10s}  {'Err_Explicit':>14s}  {'Err_CN':>14s}")
+    for dt, e, c in zip(dts, errs_exp, errs_cn):
+        print(f"  {dt:10.3e}  {e:14.3e}  {c:14.3e}")
+    print(f"  Explicit  observed orders: {[f'{o:.2f}' for o in orders_exp]}")
+    print(f"  CN        observed orders: {[f'{o:.2f}' for o in orders_cn]}")
+
+    # Convergence plot
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.loglog(dts, errs_exp, "o-", label="Explicit (Forward Euler)")
+    ax.loglog(dts, errs_cn,  "s-", label="Crank-Nicolson")
+    # Reference slopes
+    ax.loglog(dts, [errs_exp[0]*(d/dts[0])**1 for d in dts], "k--", alpha=0.5, label="O(dt¹)")
+    ax.loglog(dts, [errs_cn[0]*(d/dts[0])**2 for d in dts], "k:",  alpha=0.5, label="O(dt²)")
+    ax.set_xlabel("Δt"); ax.set_ylabel("max |error|")
+    ax.set_title("Time-step convergence — Gray-Scott"); ax.legend(); ax.grid(True)
+    plt.tight_layout()
+    out2 = "/mnt/user-data/outputs/gray_scott_convergence.png"
+    plt.savefig(out2, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  Convergence figure saved → {out2}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. Benchmark
+# ─────────────────────────────────────────────────────────────────────────────
+def benchmark():
+    print("\n=== Performance Benchmark ===")
+    model = GrayScottModel(alpha=ALPHA, beta=BETA)
+    results = []
+    for N in (64, 128):
+        grid   = CartesianGrid(N=N)
+        u0, v0 = model.initial_conditions(grid, seed=2)
+        dt_exp = grid.dx**2 / (4 * max(DELTA1, DELTA2)) * 0.9
+        dt_cn  = dt_exp * 5
+
+        # Warm-up
+        exp = ExplicitSolver(model, grid, DELTA1, DELTA2, dt_exp)
+        cn  = CrankNicolsonSolver(model, grid, DELTA1, DELTA2, dt_cn)
+
+        BENCH_STEPS = 200
+        t0 = time.perf_counter()
+        exp.run(u0.copy(), v0.copy(), BENCH_STEPS)
+        t_exp = time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        cn.run(u0.copy(), v0.copy(), BENCH_STEPS)
+        t_cn = time.perf_counter() - t0
+
+        print(f"  N={N:3d} | Explicit {t_exp:.3f}s | CN {t_cn:.3f}s "
+              f"| CN/Explicit ratio {t_cn/t_exp:.2f}x "
+              f"| CN phys-time/step {dt_cn/dt_exp:.1f}x faster")
+        results.append((N, t_exp, t_cn, dt_exp, dt_cn))
+
+    # Bar chart
+    Ns     = [r[0] for r in results]
+    t_exps = [r[1] for r in results]
+    t_cns  = [r[2] for r in results]
+    x = np.arange(len(Ns)); w = 0.35
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.bar(x - w/2, t_exps, w, label="Explicit")
+    ax.bar(x + w/2, t_cns,  w, label="Crank-Nicolson")
+    ax.set_xticks(x); ax.set_xticklabels([f"N={n}" for n in Ns])
+    ax.set_ylabel("Wall time (s)"); ax.set_title(f"Benchmark — {BENCH_STEPS} steps")
+    ax.legend(); ax.grid(axis="y")
+    plt.tight_layout()
+    out3 = "/mnt/user-data/outputs/gray_scott_benchmark.png"
+    plt.savefig(out3, dpi=150, bbox_inches="tight")
+    plt.close()
+    print(f"  Benchmark figure saved → {out3}")
+
+
+if __name__ == "__main__":
+    run_and_plot()
+    convergence_test()
+    benchmark()
+    print("\n✓ All Stage-2 validation complete.")
