@@ -9,8 +9,6 @@ Tests
 4. ParallelExplicitSolver: correctness vs serial
 5. parallel_multi_run: returns correct number of results
 """
-import sys
-sys.path.insert(0, "/home/claude/pattern_formation")
 import numpy as np
 import warnings
 

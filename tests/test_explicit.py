@@ -11,8 +11,6 @@ Tests
 """
 
 import numpy as np
-import sys
-sys.path.insert(0, "/home/claude/pattern_formation")
 
 from pattern_formation.core.grid import CartesianGrid
 from pattern_formation.core.interface import BaseModel

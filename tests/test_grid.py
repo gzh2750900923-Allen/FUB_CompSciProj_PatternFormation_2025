@@ -1,6 +1,5 @@
 """Unit tests for CartesianGrid."""
-import sys
-sys.path.insert(0, ".")
+
 import numpy as np
 from pattern_formation.core.grid import CartesianGrid
 

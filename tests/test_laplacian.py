@@ -1,5 +1,4 @@
 """Unit tests for the finite-difference Laplacian."""
-import sys
 import numpy as np
 from pattern_formation.core.grid import CartesianGrid
 from pattern_formation.core.laplacian import laplacian

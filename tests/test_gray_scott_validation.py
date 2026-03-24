@@ -8,8 +8,7 @@ Gray-Scott validation: convergence order & benchmark.
 All figures are saved to outputs/ via pattern_formation.visualization.plot.
 """
 
-import sys, time, os, warnings
-sys.path.insert(0, ".")
+import time, os, warnings
 
 import numpy as np
 

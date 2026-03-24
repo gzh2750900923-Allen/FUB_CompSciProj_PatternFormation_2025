@@ -1,5 +1,4 @@
 """Unit tests for GrayScottModel reaction terms."""
-import sys
 import numpy as np
 from pattern_formation.models.gray_scott import GrayScottModel
 

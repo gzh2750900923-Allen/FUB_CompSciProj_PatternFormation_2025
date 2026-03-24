@@ -9,8 +9,6 @@ Tests
 4. Initial conditions shape and positivity
 5. Short simulation remains finite (smoke test)
 """
-import sys
-sys.path.insert(0, "/home/claude/pattern_formation")
 import numpy as np
 from pattern_formation.core.grid import CartesianGrid
 from pattern_formation.models.giraffe import GiraffeModel

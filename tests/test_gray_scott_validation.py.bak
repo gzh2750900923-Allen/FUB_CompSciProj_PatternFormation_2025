@@ -6,8 +6,6 @@ Gray-Scott validation: convergence order & benchmark.
 3. Visual output saved to outputs/
 """
 
-import sys, time, os
-sys.path.insert(0, "/home/claude/pattern_formation")
 
 import numpy as np
 import matplotlib
