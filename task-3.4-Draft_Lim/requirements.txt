@@ -1,8 +1,0 @@
-# Core Numerical & Visualization
-numpy>=1.20.0
-scipy>=1.7.0
-matplotlib>=3.4.0
-
-# Parallel Computing (Task 3.4)
-dask[complete]>=2022.0.0
-distributed>=2022.0.0
