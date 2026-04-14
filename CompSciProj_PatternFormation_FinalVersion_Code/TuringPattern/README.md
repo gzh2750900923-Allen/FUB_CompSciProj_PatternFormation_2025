@@ -45,6 +45,8 @@ TuringPattern/
 ├── run_sim.py            # Main entry point for the simulation
 ├── setup.py              # Packaging and distribution setup
 ├── test_cupy.py          # A simple hardware diagnostic script
+├── benchmark_profile.py  # Benchmark and analyze the time consumption
+├── validate_order.py     # Verify the mathematical accuracy of the model
 ├── .gitignore            # Git ignore rules
 ├── requirements.txt      # List of dependencies
 └── README.md             # Project documentation
